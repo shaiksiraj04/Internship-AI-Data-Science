@@ -1,31 +1,52 @@
+# ============================================================
+# INTENT CLASSIFIER
+# ============================================================
+
 from src.nlp.preprocessing import preprocess_text
 
 
-# Intent keywords
+# ============================================================
+# RULE-BASED INTENT KEYWORDS
+# ============================================================
+
 INTENT_KEYWORDS = {
 
     "greeting": [
         "hello",
         "hi",
-        "hey"
+        "hey",
+        "greet"
     ],
 
     "register": [
         "register",
         "registration",
         "apply",
-        "join"
+        "join",
+        "enroll",
+        "signup",
+        "sign"
     ],
 
     "help": [
         "help",
         "assist",
-        "support"
+        "support",
+        "guidance"
+    ],
+
+    "thank_you": [
+        "thank",
+        "thanks",
+        "appreciate"
     ]
 }
 
 
-# Responses for each intent
+# ============================================================
+# INTENT RESPONSES
+# ============================================================
+
 INTENT_RESPONSES = {
 
     "greeting":
@@ -37,14 +58,21 @@ INTENT_RESPONSES = {
     "help":
         "I can help you with internship registration and related questions.",
 
+    "thank_you":
+        "You're welcome!",
+
     "unknown":
         "Sorry, I didn't understand that. Could you please rephrase."
 }
 
 
+# ============================================================
+# CLASSIFY INTENT
+# ============================================================
+
 def classify_intent(tokens):
     """
-    Identify the user's intent from processed tokens.
+    Classify an intent using keyword matching.
     """
 
     for intent, keywords in INTENT_KEYWORDS.items():
@@ -57,9 +85,13 @@ def classify_intent(tokens):
     return "unknown"
 
 
+# ============================================================
+# DETECT INTENT
+# ============================================================
+
 def detect_intent(text):
     """
-    Process raw user text and identify its intent.
+    Preprocess the user's message and detect its intent.
     """
 
     tokens = preprocess_text(text)
@@ -67,10 +99,11 @@ def detect_intent(text):
     return classify_intent(tokens)
 
 
+# ============================================================
+# GENERATE RESPONSE
+# ============================================================
+
 def generate_response(intent):
-    """
-    Generate a response based on the detected intent.
-    """
 
     return INTENT_RESPONSES.get(
         intent,
@@ -78,42 +111,51 @@ def generate_response(intent):
     )
 
 
-def chatbot_response(text):
-    """
-    Complete chatbot pipeline:
+# ============================================================
+# CHATBOT RESPONSE
+# ============================================================
 
-    User text
-        ↓
-    Preprocessing
-        ↓
-    Intent detection
-        ↓
-    Response generation
-    """
+def chatbot_response(text):
 
     intent = detect_intent(text)
 
-    response = generate_response(intent)
+    return generate_response(intent)
 
-    return response
 
+# ============================================================
+# TESTING
+# ============================================================
 
 if __name__ == "__main__":
 
     test_messages = [
-        "Hello!",
-        "I WANT TO REGISTER FOR THE INTERNSHIP!!!",
-        "I need some help.",
-        "I am studying computer science.",
-        "I'd like to join the internship."
+
+        "Hello",
+
+        "Hi there",
+
+        "I want to register",
+
+        "I want to apply for the internship",
+
+        "I want to join the internship",
+
+        "Can you help me?",
+
+        "Thanks for your help",
+
+        "I like playing cricket"
     ]
+
+    print("=" * 60)
+    print("INTENT CLASSIFIER TEST")
+    print("=" * 60)
 
     for message in test_messages:
 
-        print("\nUser:", message)
+        tokens = preprocess_text(message)
+        intent = classify_intent(tokens)
 
-        intent = detect_intent(message)
-
-        print("Intent:", intent)
-
-        print("Bot:", generate_response(intent))
+        print(f"\nUser: {message}")
+        print(f"Tokens: {tokens}")
+        print(f"Intent: {intent}")
