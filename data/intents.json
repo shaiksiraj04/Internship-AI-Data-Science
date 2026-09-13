@@ -1,0 +1,109 @@
+{
+    "intents": [
+        {
+            "intent": "greeting",
+            "patterns": [
+                "hello",
+                "hi",
+                "hey",
+                "hey there",
+                "good morning",
+                "good afternoon",
+                "good evening",
+                "hello there",
+                "hi there"
+            ]
+        },
+        {
+            "intent": "register",
+            "patterns": [
+                "I want to register",
+                "I want to apply",
+                "I want to join the internship",
+                "How can I register",
+                "How can I apply",
+                "How do I register for the internship",
+                "I would like to register",
+                "I would like to apply",
+                "I want to sign up",
+                "I want to enroll",
+                "Can I join the internship",
+                "I need to register for the internship"
+            ]
+        },
+        {
+            "intent": "help",
+            "patterns": [
+                "I need help",
+                "Can you help me",
+                "I need assistance",
+                "Please help me",
+                "Can you assist me",
+                "I need support",
+                "Help me with registration",
+                "How can you help me",
+                "I need some guidance"
+            ]
+        },
+        {
+            "intent": "name",
+            "patterns": [
+                "My name is Siraj",
+                "I am Siraj",
+                "I'm Siraj",
+                "My name is John",
+                "I am John",
+                "What is my name",
+                "I want to provide my name"
+            ]
+        },
+        {
+            "intent": "email",
+            "patterns": [
+                "My email is siraj@gmail.com",
+                "My email address is example@gmail.com",
+                "I want to provide my email",
+                "Here is my email",
+                "My email address",
+                "I will give you my email"
+            ]
+        },
+        {
+            "intent": "field",
+            "patterns": [
+                "I study computer science",
+                "I am studying computer science",
+                "My field is computer science",
+                "I study engineering",
+                "I am an engineering student",
+                "My degree is computer science",
+                "I am studying data science",
+                "My field of study is data science"
+            ]
+        },
+        {
+            "intent": "experience",
+            "patterns": [
+                "I am a beginner",
+                "I have no experience",
+                "I have some experience",
+                "I have programming experience",
+                "I know Python",
+                "I learned Python",
+                "I am experienced in programming",
+                "I am new to programming"
+            ]
+        },
+        {
+            "intent": "thank_you",
+            "patterns": [
+                "thank you",
+                "thanks",
+                "thank you very much",
+                "I appreciate your help",
+                "thanks for helping me",
+                "thank you for your assistance"
+            ]
+        }
+    ]
+}
