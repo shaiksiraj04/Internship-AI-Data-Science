@@ -8,5 +8,10 @@
         "name": "Test Student",
         "email": "test_student_001@example.com",
         "field": "computer science"
+    },
+    {
+        "name": "Siraj",
+        "email": "shaik@gmail.com",
+        "field": "computer science"
     }
 ]

@@ -1,6 +1,13 @@
-# ============================================================
-# DIALOGUE MANAGER
-# ============================================================
+"""
+Dialogue manager for the AI Registration Assistant.
+
+This module manages:
+- Conversation state
+- Registration information
+- Validation
+- Confirmation
+- Registration completion
+"""
 
 from src.nlp.entity_extractor import (
     extract_name,
@@ -14,408 +21,428 @@ from src.registration.validator import (
     validate_field
 )
 
+from src.registration.registration_manager import (
+    add_registration,
+    email_exists
+)
+
+from src.registration.registration_processor import (
+    complete_registration
+)
+
+from src.registration.confirmation import (
+    create_summary,
+    interpret_confirmation
+)
+
 
 class DialogueManager:
-    """
-    Manage conversation state, context,
-    validation, and fallback handling.
-    """
+    """Manage the state and flow of a registration conversation."""
 
     def __init__(self):
+        """Initialize a new conversation."""
+
         self.reset()
 
-    # ========================================================
-    # RESET CONVERSATION
-    # ========================================================
+    # -------------------------------------------------
+    # State management
+    # -------------------------------------------------
 
     def reset(self):
-        """
-        Reset the current conversation.
-        """
+        """Reset the conversation state."""
 
         self.state = {
             "name": None,
             "email": None,
             "field": None,
-            "current_step": "idle",
-            "error_count": 0
+            "current_step": "idle"
         }
 
-    # ========================================================
-    # SET VALUE
-    # ========================================================
-
-    def set_value(self, key, value):
-
-        if key in self.state:
-            self.state[key] = value
-
-    # ========================================================
-    # GET VALUE
-    # ========================================================
-
-    def get_value(self, key):
-
-        return self.state.get(key)
-
-    # ========================================================
-    # SET STEP
-    # ========================================================
+        self.error_count = 0
 
     def set_step(self, step):
+        """Set the current conversation step."""
 
         self.state["current_step"] = step
+        self.error_count = 0
 
-        # Reset errors when moving to a new step
-        self.state["error_count"] = 0
-
-    # ========================================================
-    # GET STEP
-    # ========================================================
-
-    def get_current_step(self):
+    def get_step(self):
+        """Return the current conversation step."""
 
         return self.state["current_step"]
 
-    # ========================================================
-    # INCREASE ERROR COUNT
-    # ========================================================
+    def set_value(self, key, value):
+        """Store a value in the conversation state."""
 
-    def increase_error_count(self):
+        self.state[key] = value
 
-        self.state["error_count"] += 1
+    def get_value(self, key):
+        """Get a value from the conversation state."""
 
-    # ========================================================
-    # RESET ERROR COUNT
-    # ========================================================
+        return self.state.get(key)
 
-    def reset_error_count(self):
+    # -------------------------------------------------
+    # State checks
+    # -------------------------------------------------
 
-        self.state["error_count"] = 0
+    def has_name(self):
+        return bool(self.state["name"])
 
-    # ========================================================
-    # EXTRACT ENTITIES
-    # ========================================================
+    def has_email(self):
+        return bool(self.state["email"])
 
-    def extract_entities(self, text):
-
-        return {
-            "name": extract_name(text),
-            "email": extract_email(text),
-            "field": extract_field(text)
-        }
-
-    # ========================================================
-    # PROCESS MESSAGE
-    # ========================================================
-
-    def process_message(self, text):
-
-        text = text.strip()
-
-        if not text:
-
-            return {
-                "success": False,
-                "message": "Please enter a response.",
-                "state": self.get_state()
-            }
-
-        entities = self.extract_entities(text)
-
-        current_step = self.get_current_step()
-
-        # ====================================================
-        # NAME
-        # ====================================================
-
-        if current_step == "name":
-
-            name = entities["name"]
-
-            if name and validate_name(name):
-
-                self.set_value(
-                    "name",
-                    name
-                )
-
-                self.set_step(
-                    "email"
-                )
-
-                return {
-                    "success": True,
-                    "message": (
-                        f"Nice to meet you, {name}! "
-                        "What is your email address?"
-                    ),
-                    "state": self.get_state()
-                }
-
-            # Invalid name
-            self.increase_error_count()
-
-            if self.state["error_count"] >= 3:
-
-                return {
-                    "success": False,
-                    "message": (
-                        "I'm having trouble getting "
-                        "your name. Please enter it "
-                        "using letters only, for example: "
-                        "Siraj or Mohammed Siraj."
-                    ),
-                    "state": self.get_state()
-                }
-
-            return {
-                "success": False,
-                "message": (
-                    "I couldn't identify your name. "
-                    "Please say something like: "
-                    "'My name is Siraj'."
-                ),
-                "state": self.get_state()
-            }
-
-        # ====================================================
-        # EMAIL
-        # ====================================================
-
-        if current_step == "email":
-
-            email = entities["email"]
-
-            if email and validate_email(email):
-
-                self.set_value(
-                    "email",
-                    email
-                )
-
-                self.set_step(
-                    "field"
-                )
-
-                return {
-                    "success": True,
-                    "message": (
-                        "Thank you! What is your "
-                        "field of study?"
-                    ),
-                    "state": self.get_state()
-                }
-
-            # Invalid email
-            self.increase_error_count()
-
-            if self.state["error_count"] >= 3:
-
-                return {
-                    "success": False,
-                    "message": (
-                        "The email still doesn't appear "
-                        "to be valid. Please enter a complete "
-                        "email address such as "
-                        "'student@gmail.com'."
-                    ),
-                    "state": self.get_state()
-                }
-
-            return {
-                "success": False,
-                "message": (
-                    "That doesn't look like a valid "
-                    "email address. Please provide an email "
-                    "such as 'student@gmail.com'."
-                ),
-                "state": self.get_state()
-            }
-
-        # ====================================================
-        # FIELD
-        # ====================================================
-
-        if current_step == "field":
-
-            field = entities["field"]
-
-            if field and validate_field(field):
-
-                self.set_value(
-                    "field",
-                    field
-                )
-
-                self.set_step(
-                    "confirmation"
-                )
-
-                return {
-                    "success": True,
-                    "message": (
-                        "Great! I have collected "
-                        "all your information.\n\n"
-                        "Please confirm your details:\n"
-                        f"Name: {self.get_value('name')}\n"
-                        f"Email: {self.get_value('email')}\n"
-                        f"Field: {self.get_value('field')}\n\n"
-                        "Are these details correct? "
-                        "Please say yes or no."
-                    ),
-                    "state": self.get_state()
-                }
-
-            # Invalid field
-            self.increase_error_count()
-
-            if self.state["error_count"] >= 3:
-
-                return {
-                    "success": False,
-                    "message": (
-                        "I still couldn't recognize "
-                        "your field. Some supported "
-                        "fields are Computer Science, "
-                        "Data Science, AI, ML, ECE, "
-                        "EEE, IT, Mechanical, and Civil."
-                    ),
-                    "state": self.get_state()
-                }
-
-            return {
-                "success": False,
-                "message": (
-                    "I couldn't recognize that field. "
-                    "Please provide a supported field "
-                    "such as CSE, ECE, AI, ML, or "
-                    "Data Science."
-                ),
-                "state": self.get_state()
-            }
-
-        # ====================================================
-        # CONFIRMATION
-        # ====================================================
-
-        if current_step == "confirmation":
-
-            normalized_text = text.lower()
-
-            if normalized_text in [
-                "yes",
-                "y",
-                "correct",
-                "confirm",
-                "confirmed",
-                "yes correct"
-            ]:
-
-                self.set_step(
-                    "completed"
-                )
-
-                return {
-                    "success": True,
-                    "message": (
-                        "Perfect! Your information "
-                        "has been confirmed."
-                    ),
-                    "state": self.get_state()
-                }
-
-            if normalized_text in [
-                "no",
-                "n",
-                "incorrect",
-                "wrong"
-            ]:
-
-                return {
-                    "success": False,
-                    "message": (
-                        "No problem. Please tell me "
-                        "which information needs to "
-                        "be corrected."
-                    ),
-                    "state": self.get_state()
-                }
-
-            self.increase_error_count()
-
-            return {
-                "success": False,
-                "message": (
-                    "Please confirm your information "
-                    "by saying 'yes' or 'no'."
-                ),
-                "state": self.get_state()
-            }
-
-        # ====================================================
-        # COMPLETED
-        # ====================================================
-
-        if current_step == "completed":
-
-            return {
-                "success": True,
-                "message": (
-                    "Your registration information "
-                    "has already been confirmed."
-                ),
-                "state": self.get_state()
-            }
-
-        # ====================================================
-        # IDLE
-        # ====================================================
-
-        return {
-            "success": False,
-            "message": (
-                "Please say 'I want to register' "
-                "to begin the registration process."
-            ),
-            "state": self.get_state()
-        }
-
-    # ========================================================
-    # REGISTRATION COMPLETE
-    # ========================================================
+    def has_field(self):
+        return bool(self.state["field"])
 
     def is_registration_complete(self):
+        """Check whether all registration information exists."""
 
         return (
-            self.state["name"] is not None
-            and self.state["email"] is not None
-            and self.state["field"] is not None
+            self.has_name()
+            and self.has_email()
+            and self.has_field()
         )
 
-    # ========================================================
-    # MISSING INFORMATION
-    # ========================================================
-
     def get_missing_information(self):
+        """Return missing registration fields."""
 
         missing = []
 
-        if self.state["name"] is None:
+        if not self.has_name():
             missing.append("name")
 
-        if self.state["email"] is None:
+        if not self.has_email():
             missing.append("email")
 
-        if self.state["field"] is None:
+        if not self.has_field():
             missing.append("field")
 
         return missing
 
-    # ========================================================
-    # GET STATE
-    # ========================================================
-
     def get_state(self):
+        """Return a copy of the current state."""
 
         return self.state.copy()
+
+    # -------------------------------------------------
+    # Name handling
+    # -------------------------------------------------
+
+    def process_name(self, text):
+        """Process and validate the student's name."""
+
+        name = extract_name(text)
+
+        if not name:
+            self.error_count += 1
+
+            if self.error_count >= 2:
+                return (
+                    "I couldn't identify your name. "
+                    "Please use a format like: "
+                    "'My name is Siraj'."
+                )
+
+            return "Please provide your name. For example: My name is Siraj."
+
+        if not validate_name(name):
+            self.error_count += 1
+
+            return (
+                "That doesn't look like a valid name. "
+                "Please enter your name using letters only."
+            )
+
+        self.set_value("name", name)
+        self.set_step("email")
+
+        return (
+            f"Nice to meet you, {name}! "
+            "What is your email address?"
+        )
+
+    # -------------------------------------------------
+    # Email handling
+    # -------------------------------------------------
+
+    def process_email(self, text):
+        """Process and validate the student's email."""
+
+        email = extract_email(text)
+
+        if not email:
+            self.error_count += 1
+
+            if self.error_count >= 2:
+                return (
+                    "I couldn't identify a valid email address. "
+                    "Please use a format such as "
+                    "siraj@example.com."
+                )
+
+            return "Please provide a valid email address."
+
+        if not validate_email(email):
+            self.error_count += 1
+
+            return (
+                "That email address is not valid. "
+                "Please try again."
+            )
+
+        # Check duplicate email early
+        if email_exists(email):
+            self.error_count += 1
+
+            return (
+                "This email address is already registered. "
+                "Please provide a different email address."
+            )
+
+        self.set_value("email", email)
+        self.set_step("field")
+
+        return (
+            "Thank you! What is your field of study?\n"
+            "For example: CSE, Data Science, AI, ECE, or Mechanical."
+        )
+
+    # -------------------------------------------------
+    # Field handling
+    # -------------------------------------------------
+
+    def process_field(self, text):
+        """Process and validate the student's field."""
+
+        field = extract_field(text)
+
+        if not field:
+            self.error_count += 1
+
+            if self.error_count >= 2:
+                return (
+                    "I couldn't identify your field of study. "
+                    "Please provide a field such as "
+                    "Computer Science, Data Science, "
+                    "Artificial Intelligence, ECE, or Mechanical."
+                )
+
+            return "Please provide your field of study."
+
+        if not validate_field(field):
+            self.error_count += 1
+
+            return "That field is not currently supported. Please try another field."
+
+        self.set_value("field", field)
+        self.set_step("confirmation")
+
+        return create_summary(
+            self.state["name"],
+            self.state["email"],
+            self.state["field"]
+        )
+
+    # -------------------------------------------------
+    # Confirmation handling
+    # -------------------------------------------------
+
+    def process_confirmation(self, text):
+        """Process the user's confirmation response."""
+
+        confirmation = interpret_confirmation(text)
+
+        # ---------------------------------------------
+        # User confirmed
+        # ---------------------------------------------
+
+        if confirmation == "yes":
+
+            name = self.state["name"]
+            email = self.state["email"]
+            field = self.state["field"]
+
+            # Final registration processing
+            result = complete_registration(
+                name,
+                email,
+                field
+            )
+
+            if not result["success"]:
+
+                if result.get("duplicate"):
+                    return (
+                        "This email address is already registered. "
+                        "Please restart the registration with a different email."
+                    )
+
+                return (
+                    f"Registration could not be completed: "
+                    f"{result['message']}"
+                )
+
+            # Save registration
+            add_registration(result["data"])
+
+            self.set_step("completed")
+
+            return (
+                "\nPerfect! Your registration has been "
+                "successfully completed. 🎉\n\n"
+                "Thank you for registering for the internship!"
+            )
+
+        # ---------------------------------------------
+        # User rejected
+        # ---------------------------------------------
+
+        if confirmation == "no":
+
+            self.set_step("correction")
+
+            return (
+                "No problem. Which information would you like "
+                "to correct?\n\n"
+                "1. Name\n"
+                "2. Email\n"
+                "3. Field"
+            )
+
+        # ---------------------------------------------
+        # Unknown response
+        # ---------------------------------------------
+
+        self.error_count += 1
+
+        return (
+            "Please confirm your registration by answering "
+            "'yes' or 'no'."
+        )
+
+    # -------------------------------------------------
+    # Correction handling
+    # -------------------------------------------------
+
+    def process_correction(self, text):
+        """Handle correction requests after confirmation."""
+
+        response = text.strip().lower()
+
+        # Name correction
+        if (
+            "name" in response
+            or response == "1"
+        ):
+            self.set_step("name")
+
+            return "Sure. Please provide your correct name."
+
+        # Email correction
+        if (
+            "email" in response
+            or "mail" in response
+            or response == "2"
+        ):
+            self.set_step("email")
+
+            return "Sure. Please provide your correct email address."
+
+        # Field correction
+        if (
+            "field" in response
+            or "study" in response
+            or response == "3"
+        ):
+            self.set_step("field")
+
+            return "Sure. Please provide your correct field of study."
+
+        return (
+            "Please choose one option:\n"
+            "1. Name\n"
+            "2. Email\n"
+            "3. Field"
+        )
+
+    # -------------------------------------------------
+    # Completed state
+    # -------------------------------------------------
+
+    def process_completed(self, text):
+        """Handle messages after registration is completed."""
+
+        return (
+            "Your registration has already been completed. "
+            "Thank you!"
+        )
+
+    # -------------------------------------------------
+    # Main message processor
+    # -------------------------------------------------
+
+    def process_message(self, text):
+        """
+        Process a message according to the current state.
+
+        Args:
+            text (str): User message
+
+        Returns:
+            str: Chatbot response
+        """
+
+        if not text or not text.strip():
+
+            return (
+                "I didn't receive any information. "
+                "Please enter a message."
+            )
+
+        current_step = self.get_step()
+
+        if current_step == "name":
+            return self.process_name(text)
+
+        if current_step == "email":
+            return self.process_email(text)
+
+        if current_step == "field":
+            return self.process_field(text)
+
+        if current_step == "confirmation":
+            return self.process_confirmation(text)
+
+        if current_step == "correction":
+            return self.process_correction(text)
+
+        if current_step == "completed":
+            return self.process_completed(text)
+
+        return (
+            "Please tell me if you would like to "
+            "register for the internship."
+        )
+
+
+if __name__ == "__main__":
+
+    print("Testing Dialogue Manager...\n")
+
+    manager = DialogueManager()
+
+    print("Step:", manager.get_step())
+
+    manager.set_step("name")
+
+    print(
+        "\nBot:",
+        manager.process_message("My name is Test Student")
+    )
+
+    print(
+        "Current step:",
+        manager.get_step()
+    )
+
+    print("\nDialogue manager test completed.")
