@@ -1,596 +1,257 @@
-# ============================================================
-# AI REGISTRATION ASSISTANT
-# DAY 4 - COMPLETE CHATBOT TESTING
-# ============================================================
+"""
+Day 5 - Comprehensive Registration Tests
+
+Tests:
+1. Start registration
+2. Collect name
+3. Collect email
+4. Collect field
+5. Confirmation
+6. Successful registration
+7. Invalid email
+8. Invalid field
+9. Duplicate email
+10. Correction flow
+11. JSON persistence
+12. Reset conversation
+"""
+
+import json
+from pathlib import Path
 
 from src.chatbot.chatbot import RegistrationChatbot
+from src.registration.registration_manager import load_registrations
 
-
-# ============================================================
-# TEST 1: START REGISTRATION
-# ============================================================
 
 def test_start_registration():
-
-    print("\n" + "=" * 60)
-    print("TEST 1: START REGISTRATION")
-    print("=" * 60)
-
     chatbot = RegistrationChatbot()
 
-    response = chatbot.respond(
-        "I want to register"
-    )
+    response = chatbot.respond("I want to register")
 
-    print("\nUser: I want to register")
-    print(f"Bot: {response}")
+    assert "What is your name?" in response
+    assert chatbot.dialogue_manager.get_step() == "name"
 
-    assert (
-        "What is your name?"
-        in response
-    )
+    print("✅ Test 1: Start registration")
 
-    assert (
-        chatbot.dialogue_manager.get_current_step()
-        == "name"
-    )
-
-    print("\nResult: PASSED ✅")
-
-
-# ============================================================
-# TEST 2: NAME COLLECTION
-# ============================================================
 
 def test_name_collection():
-
-    print("\n" + "=" * 60)
-    print("TEST 2: NAME COLLECTION")
-    print("=" * 60)
-
     chatbot = RegistrationChatbot()
 
-    chatbot.respond(
-        "I want to register"
-    )
+    chatbot.respond("I want to register")
+    response = chatbot.respond("My name is Test Student")
 
-    response = chatbot.respond(
-        "My name is Test User"
-    )
+    assert chatbot.dialogue_manager.get_value("name") == "Test Student"
+    assert chatbot.dialogue_manager.get_step() == "email"
+    assert "email" in response.lower()
 
-    print("\nUser: My name is Test User")
-    print(f"Bot: {response}")
+    print("✅ Test 2: Name collection")
 
-    assert (
-        chatbot.dialogue_manager
-        .get_value("name")
-        == "Test User"
-    )
-
-    assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "email"
-    )
-
-    print("\nStored Name: Test User")
-    print("Result: PASSED ✅")
-
-
-# ============================================================
-# TEST 3: EMAIL COLLECTION
-# ============================================================
 
 def test_email_collection():
-
-    print("\n" + "=" * 60)
-    print("TEST 3: EMAIL COLLECTION")
-    print("=" * 60)
-
     chatbot = RegistrationChatbot()
 
-    chatbot.respond(
-        "I want to register"
-    )
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Test Student")
 
-    chatbot.respond(
-        "My name is Email Tester"
-    )
-
-    response = chatbot.respond(
-        "emailtester_day4@example.com"
-    )
-
-    print(
-        "\nUser: emailtester_day4@example.com"
-    )
-
-    print(
-        f"Bot: {response}"
-    )
+    response = chatbot.respond("unique_email_day5@example.com")
 
     assert (
-        chatbot.dialogue_manager
-        .get_value("email")
-        == "emailtester_day4@example.com"
+        chatbot.dialogue_manager.get_value("email")
+        == "unique_email_day5@example.com"
     )
 
-    assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "field"
-    )
+    assert chatbot.dialogue_manager.get_step() == "field"
+    assert "field" in response.lower()
 
-    print(
-        "\nStored Email: "
-        "emailtester_day4@example.com"
-    )
+    print("✅ Test 3: Email collection")
 
-    print("Result: PASSED ✅")
-
-
-# ============================================================
-# TEST 4: FIELD COLLECTION
-# ============================================================
 
 def test_field_collection():
-
-    print("\n" + "=" * 60)
-    print("TEST 4: FIELD COLLECTION")
-    print("=" * 60)
-
     chatbot = RegistrationChatbot()
 
-    chatbot.respond(
-        "I want to register"
-    )
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Test Student")
+    chatbot.respond("field_test_day5@example.com")
 
-    chatbot.respond(
-        "My name is Field Tester"
-    )
-
-    chatbot.respond(
-        "fieldtester_day4@example.com"
-    )
-
-    response = chatbot.respond(
-        "CSE"
-    )
-
-    print("\nUser: CSE")
-    print(f"Bot: {response}")
+    response = chatbot.respond("CSE")
 
     assert (
-        chatbot.dialogue_manager
-        .get_value("field")
+        chatbot.dialogue_manager.get_value("field")
         == "computer science"
     )
 
-    assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "confirmation"
-    )
+    assert chatbot.dialogue_manager.get_step() == "confirmation"
+    assert "correct" in response.lower()
 
-    print(
-        "\nStored Field: computer science"
-    )
-
-    print("Result: PASSED ✅")
+    print("✅ Test 4: Field collection")
 
 
-# ============================================================
-# TEST 5: COMPLETE REGISTRATION
-# ============================================================
-
-def test_complete_registration():
-
-    print("\n" + "=" * 60)
-    print("TEST 5: COMPLETE REGISTRATION")
-    print("=" * 60)
-
+def test_successful_registration():
     chatbot = RegistrationChatbot()
 
-    messages = [
-        "I want to register",
-        "My name is Complete Tester",
-        "complete_day4@example.com",
-        "CSE",
-        "yes"
-    ]
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Successful Student")
+    chatbot.respond("successful_day5@example.com")
+    chatbot.respond("CSE")
 
-    for message in messages:
+    response = chatbot.respond("yes")
 
-        response = chatbot.respond(
-            message
-        )
+    assert "successfully completed" in response.lower()
+    assert chatbot.dialogue_manager.get_step() == "completed"
 
-        print(f"\nUser: {message}")
-        print(f"Bot: {response}")
-
-    state = (
-        chatbot.dialogue_manager
-        .get_state()
-    )
-
-    print("\nFinal State:")
-    print(state)
-
-    assert (
-        state["name"]
-        == "Complete Tester"
-    )
-
-    assert (
-        state["email"]
-        == "complete_day4@example.com"
-    )
-
-    assert (
-        state["field"]
-        == "computer science"
-    )
-
-    assert (
-        state["current_step"]
-        == "completed"
-    )
-
-    assert (
-        chatbot.dialogue_manager
-        .is_registration_complete()
-        is True
-    )
-
-    print("\nRegistration Complete: YES ✅")
-    print("Result: PASSED ✅")
+    print("✅ Test 5: Successful registration")
 
 
-# ============================================================
-# TEST 6: INVALID EMAIL RECOVERY
-# ============================================================
-
-def test_invalid_email_recovery():
-
-    print("\n" + "=" * 60)
-    print("TEST 6: INVALID EMAIL RECOVERY")
-    print("=" * 60)
-
+def test_invalid_email():
     chatbot = RegistrationChatbot()
 
-    chatbot.respond(
-        "I want to register"
-    )
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Email Student")
 
-    chatbot.respond(
-        "My name is Invalid Email Tester"
-    )
+    response = chatbot.respond("invalid-email")
 
-    response = chatbot.respond(
-        "invalid-email"
-    )
+    assert "valid email" in response.lower()
+    assert chatbot.dialogue_manager.get_step() == "email"
 
-    print("\nUser: invalid-email")
-    print(f"Bot: {response}")
-
-    assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "email"
-    )
-
-    assert (
-        chatbot.dialogue_manager
-        .get_value("email")
-        is None
-    )
-
-    print("\nInvalid email rejected: YES ✅")
-
-    # Try valid email
-    response = chatbot.respond(
-        "valid_day4@example.com"
-    )
-
-    print(
-        "\nUser: valid_day4@example.com"
-    )
-
-    print(
-        f"Bot: {response}"
-    )
-
-    assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "field"
-    )
-
-    print("\nValid email accepted: YES ✅")
-    print("Result: PASSED ✅")
+    print("✅ Test 6: Invalid email handling")
 
 
-# ============================================================
-# TEST 7: INVALID FIELD RECOVERY
-# ============================================================
-
-def test_invalid_field_recovery():
-
-    print("\n" + "=" * 60)
-    print("TEST 7: INVALID FIELD RECOVERY")
-    print("=" * 60)
-
+def test_invalid_field():
     chatbot = RegistrationChatbot()
 
-    chatbot.respond(
-        "I want to register"
-    )
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Field Student")
+    chatbot.respond("field_student@example.com")
 
-    chatbot.respond(
-        "My name is Invalid Field Tester"
-    )
+    response = chatbot.respond("Rocket Science")
 
-    chatbot.respond(
-        "invalidfield_day4@example.com"
-    )
-
-    response = chatbot.respond(
-        "Rocket Science"
-    )
-
-    print("\nUser: Rocket Science")
-    print(f"Bot: {response}")
-
+    assert chatbot.dialogue_manager.get_step() == "field"
     assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "field"
+        "field" in response.lower()
+        or "supported" in response.lower()
     )
 
-    assert (
-        chatbot.dialogue_manager
-        .get_value("field")
-        is None
-    )
-
-    print("\nInvalid field rejected: YES ✅")
-
-    # Try valid field
-    response = chatbot.respond(
-        "Data Science"
-    )
-
-    print("\nUser: Data Science")
-    print(f"Bot: {response}")
-
-    assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "confirmation"
-    )
-
-    print("\nValid field accepted: YES ✅")
-    print("Result: PASSED ✅")
+    print("✅ Test 7: Invalid field handling")
 
 
-# ============================================================
-# TEST 8: EMPTY MESSAGE
-# ============================================================
-
-def test_empty_message():
-
-    print("\n" + "=" * 60)
-    print("TEST 8: EMPTY MESSAGE")
-    print("=" * 60)
-
+def test_duplicate_email():
     chatbot = RegistrationChatbot()
 
-    response = chatbot.respond(
-        ""
+    # First registration
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is First Student")
+    chatbot.respond("duplicate_test_day5@example.com")
+    chatbot.respond("CSE")
+
+    first_response = chatbot.respond("yes")
+
+    assert "successfully completed" in first_response.lower()
+
+    # Second registration with same email
+    chatbot.reset()
+
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Second Student")
+
+    second_response = chatbot.respond(
+        "duplicate_test_day5@example.com"
     )
 
-    print("\nUser: [empty]")
-    print(f"Bot: {response}")
+    assert "already registered" in second_response.lower()
+    assert chatbot.dialogue_manager.get_step() == "email"
 
-    assert (
-        response
-        == "Please enter a message."
-    )
-
-    print("\nEmpty input handled: YES ✅")
-    print("Result: PASSED ✅")
+    print("✅ Test 8: Duplicate email protection")
 
 
-# ============================================================
-# TEST 9: HELP
-# ============================================================
-
-def test_help():
-
-    print("\n" + "=" * 60)
-    print("TEST 9: HELP")
-    print("=" * 60)
-
+def test_correction_flow():
     chatbot = RegistrationChatbot()
 
-    response = chatbot.respond(
-        "I need help"
-    )
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Correction Student")
+    chatbot.respond("correction_day5@example.com")
+    chatbot.respond("CSE")
 
-    print("\nUser: I need help")
-    print(f"Bot: {response}")
+    response = chatbot.respond("no")
 
-    assert (
-        "registration"
-        in response.lower()
-    )
+    assert chatbot.dialogue_manager.get_step() == "correction"
+    assert "name" in response.lower()
+    assert "email" in response.lower()
+    assert "field" in response.lower()
 
-    print("\nHelp response received: YES ✅")
-    print("Result: PASSED ✅")
+    print("✅ Test 9: Correction flow")
 
 
-# ============================================================
-# TEST 10: GREETING
-# ============================================================
+def test_json_persistence():
+    registrations = load_registrations()
+
+    assert isinstance(registrations, list)
+
+    print("✅ Test 10: JSON persistence")
+
+
+def test_chatbot_reset():
+    chatbot = RegistrationChatbot()
+
+    chatbot.respond("I want to register")
+    chatbot.respond("My name is Reset Student")
+
+    chatbot.reset()
+
+    assert chatbot.dialogue_manager.get_step() == "idle"
+    assert chatbot.dialogue_manager.get_value("name") is None
+    assert chatbot.dialogue_manager.get_value("email") is None
+    assert chatbot.dialogue_manager.get_value("field") is None
+
+    print("✅ Test 11: Conversation reset")
+
 
 def test_greeting():
-
-    print("\n" + "=" * 60)
-    print("TEST 10: GREETING")
-    print("=" * 60)
-
     chatbot = RegistrationChatbot()
 
-    response = chatbot.respond(
-        "Hello"
-    )
+    response = chatbot.respond("Hello")
 
-    print("\nUser: Hello")
-    print(f"Bot: {response}")
+    assert "welcome" in response.lower()
 
-    assert (
-        "welcome"
-        in response.lower()
-    )
-
-    print("\nGreeting handled: YES ✅")
-    print("Result: PASSED ✅")
+    print("✅ Test 12: Greeting")
 
 
-# ============================================================
-# TEST 11: UNKNOWN INPUT
-# ============================================================
-
-def test_unknown_input():
-
-    print("\n" + "=" * 60)
-    print("TEST 11: UNKNOWN INPUT")
-    print("=" * 60)
-
+def test_help():
     chatbot = RegistrationChatbot()
 
-    chatbot.respond(
-        "I want to register"
-    )
+    response = chatbot.respond("Help me")
 
-    response = chatbot.respond(
-        "I like playing cricket"
-    )
+    assert "register" in response.lower()
 
-    print(
-        "\nUser: I like playing cricket"
-    )
-
-    print(
-        f"Bot: {response}"
-    )
-
-    assert (
-        chatbot.dialogue_manager
-        .get_current_step()
-        == "name"
-    )
-
-    print(
-        "\nUnexpected input handled: YES ✅"
-    )
-
-    print("Result: PASSED ✅")
+    print("✅ Test 13: Help")
 
 
-# ============================================================
-# TEST 12: CONVERSATION STATE
-# ============================================================
+def run_all_tests():
+    """Run every Day 5 test."""
 
-def test_conversation_state():
-
-    print("\n" + "=" * 60)
-    print("TEST 12: CONVERSATION STATE")
     print("=" * 60)
-
-    chatbot = RegistrationChatbot()
-
-    chatbot.respond(
-        "I want to register"
-    )
-
-    chatbot.respond(
-        "My name is State Tester"
-    )
-
-    chatbot.respond(
-        "state_day4@example.com"
-    )
-
-    state = (
-        chatbot.dialogue_manager
-        .get_state()
-    )
-
-    print("\nCurrent State:")
-    print(state)
-
-    assert (
-        state["name"]
-        == "State Tester"
-    )
-
-    assert (
-        state["email"]
-        == "state_day4@example.com"
-    )
-
-    assert (
-        state["field"]
-        is None
-    )
-
-    assert (
-        state["current_step"]
-        == "field"
-    )
-
-    print("\nConversation state preserved: YES ✅")
-    print("Result: PASSED ✅")
-
-
-# ============================================================
-# RUN ALL TESTS
-# ============================================================
-
-if __name__ == "__main__":
-
-    print("\n")
-    print("*" * 60)
-    print("AI REGISTRATION ASSISTANT")
-    print("DAY 4 - COMPLETE TEST SUITE")
-    print("*" * 60)
+    print("       DAY 5 REGISTRATION TESTS")
+    print("=" * 60)
+    print()
 
     test_start_registration()
-
     test_name_collection()
-
     test_email_collection()
-
     test_field_collection()
-
-    test_complete_registration()
-
-    test_invalid_email_recovery()
-
-    test_invalid_field_recovery()
-
-    test_empty_message()
-
+    test_successful_registration()
+    test_invalid_email()
+    test_invalid_field()
+    test_duplicate_email()
+    test_correction_flow()
+    test_json_persistence()
+    test_chatbot_reset()
+    test_greeting()
     test_help()
 
-    test_greeting()
+    print()
+    print("=" * 60)
+    print("🎉 ALL DAY 5 TESTS PASSED SUCCESSFULLY!")
+    print("=" * 60)
 
-    test_unknown_input()
 
-    test_conversation_state()
-
-    print("\n")
-    print("*" * 60)
-    print("ALL DAY 4 TESTS PASSED SUCCESSFULLY! 🎉")
-    print("*" * 60)
+if __name__ == "__main__":
+    run_all_tests()

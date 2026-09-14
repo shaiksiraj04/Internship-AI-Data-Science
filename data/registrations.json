@@ -13,5 +13,25 @@
         "name": "Siraj",
         "email": "shaik@gmail.com",
         "field": "computer science"
+    },
+    {
+        "name": "Successful Student",
+        "email": "successful_day5@example.com",
+        "field": "computer science"
+    },
+    {
+        "name": "First Student",
+        "email": "duplicate_test_day5@example.com",
+        "field": "computer science"
+    },
+    {
+        "name": "Shaik",
+        "email": "mahammed@gmail.com",
+        "field": "computer science"
+    },
+    {
+        "name": "Yes Test",
+        "email": "yes_variation@example.com",
+        "field": "computer science"
     }
 ]
