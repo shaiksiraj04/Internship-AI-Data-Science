@@ -89,9 +89,15 @@ def test_field_collection():
 def test_successful_registration():
     chatbot = RegistrationChatbot()
 
+    import uuid
+
+    unique_email = (
+        f"successful_{uuid.uuid4().hex[:8]}@example.com"
+    )
+
     chatbot.respond("I want to register")
     chatbot.respond("My name is Successful Student")
-    chatbot.respond("successful_day5@example.com")
+    chatbot.respond(unique_email)
     chatbot.respond("CSE")
 
     response = chatbot.respond("yes")
@@ -137,28 +143,61 @@ def test_invalid_field():
 def test_duplicate_email():
     chatbot = RegistrationChatbot()
 
+    import uuid
+
+    # Generate a unique email for this test run
+    unique_email = (
+        f"duplicate_{uuid.uuid4().hex[:8]}@example.com"
+    )
+
+    # -------------------------------------------------
     # First registration
+    # -------------------------------------------------
+
     chatbot.respond("I want to register")
-    chatbot.respond("My name is First Student")
-    chatbot.respond("duplicate_test_day5@example.com")
+
+    chatbot.respond(
+        "My name is First Student"
+    )
+
+    chatbot.respond(
+        unique_email
+    )
+
     chatbot.respond("CSE")
 
     first_response = chatbot.respond("yes")
 
     assert "successfully completed" in first_response.lower()
 
-    # Second registration with same email
+    # -------------------------------------------------
+    # Start a new registration
+    # -------------------------------------------------
+
     chatbot.reset()
 
-    chatbot.respond("I want to register")
-    chatbot.respond("My name is Second Student")
+    chatbot.respond(
+        "I want to register"
+    )
+
+    chatbot.respond(
+        "My name is Second Student"
+    )
+
+    # -------------------------------------------------
+    # Try the same email
+    # -------------------------------------------------
 
     second_response = chatbot.respond(
-        "duplicate_test_day5@example.com"
+        unique_email
     )
 
     assert "already registered" in second_response.lower()
-    assert chatbot.dialogue_manager.get_step() == "email"
+
+    assert (
+        chatbot.dialogue_manager.get_step()
+        == "email"
+    )
 
     print("✅ Test 8: Duplicate email protection")
 
