@@ -2,29 +2,32 @@
 Main chatbot for the AI Registration Assistant.
 
 This module connects:
-- Intent recognition
+- ML intent recognition
+- Confidence-based unknown detection
+- FAQ system
 - Dialogue management
 - Registration workflow
 """
 
-from src.chatbot.intent_classifier import detect_intent
+from src.ml.predict import predict_intent
 from src.chatbot.dialog_manager import DialogueManager
+from src.chatbot.faq import find_faq
 
 
 class RegistrationChatbot:
-    """Main chatbot class."""
+    """Main AI Registration Chatbot."""
 
     def __init__(self):
-        """Initialize the chatbot."""
+        """Initialize a new chatbot."""
 
         self.dialogue_manager = DialogueManager()
 
     # -------------------------------------------------
-    # Intent responses
+    # Basic responses
     # -------------------------------------------------
 
     def greeting_response(self):
-        """Return a greeting response."""
+        """Return greeting response."""
 
         return (
             "Hello! Welcome to the AI Registration Assistant. "
@@ -40,13 +43,22 @@ class RegistrationChatbot:
             "and complete your registration."
         )
 
+    def unknown_response(self):
+        """Return fallback response for unknown input."""
+
+        return (
+            "Sorry, I didn't understand that.\n"
+            "You can ask me about the internship, "
+            "ask for help, or say 'I want to register'."
+        )
+
     # -------------------------------------------------
-    # Main response function
+    # ML Intent Processing
     # -------------------------------------------------
 
-    def respond(self, text):
+    def process_intent(self, text):
         """
-        Generate a chatbot response.
+        Process a user message using the ML intent classifier.
 
         Args:
             text (str): User message
@@ -55,31 +67,10 @@ class RegistrationChatbot:
             str: Chatbot response
         """
 
-        if not text or not text.strip():
-
-            return (
-                "I didn't receive any message. "
-                "Please type something."
-            )
-
-        current_step = self.dialogue_manager.get_step()
+        intent, confidence = predict_intent(text)
 
         # -------------------------------------------------
-        # Registration is already in progress
-        # -------------------------------------------------
-
-        if current_step != "idle":
-
-            return self.dialogue_manager.process_message(text)
-
-        # -------------------------------------------------
-        # Detect intent
-        # -------------------------------------------------
-
-        intent = detect_intent(text)
-
-        # -------------------------------------------------
-        # Greeting
+        # Greeting intent
         # -------------------------------------------------
 
         if intent == "greeting":
@@ -87,15 +78,7 @@ class RegistrationChatbot:
             return self.greeting_response()
 
         # -------------------------------------------------
-        # Help
-        # -------------------------------------------------
-
-        if intent == "help":
-
-            return self.help_response()
-
-        # -------------------------------------------------
-        # Registration
+        # Registration intent
         # -------------------------------------------------
 
         if intent == "register":
@@ -108,7 +91,15 @@ class RegistrationChatbot:
             )
 
         # -------------------------------------------------
-        # Thank you
+        # Help intent
+        # -------------------------------------------------
+
+        if intent == "help":
+
+            return self.help_response()
+
+        # -------------------------------------------------
+        # Thank-you intent
         # -------------------------------------------------
 
         if intent == "thank_you":
@@ -119,24 +110,94 @@ class RegistrationChatbot:
             )
 
         # -------------------------------------------------
-        # Unknown input
+        # Unknown intent
         # -------------------------------------------------
 
-        return (
-            "Sorry, I didn't understand that.\n"
-            "You can say something like "
-            "'I want to register' or 'Help'."
-        )
+        return self.unknown_response()
 
     # -------------------------------------------------
-    # Reset chatbot
+    # Main Response Function
+    # -------------------------------------------------
+
+    def respond(self, text):
+        """
+        Generate a response to a user message.
+
+        Registration messages are handled by the
+        DialogueManager.
+
+        Other messages are checked against the FAQ
+        system and then the ML intent classifier.
+
+        Args:
+            text (str): User message
+
+        Returns:
+            str: Chatbot response
+        """
+
+        # -------------------------------------------------
+        # Empty input
+        # -------------------------------------------------
+
+        if not text or not text.strip():
+
+            return (
+                "I didn't receive any message. "
+                "Please type something."
+            )
+
+        # -------------------------------------------------
+        # Get current conversation state
+        # -------------------------------------------------
+
+        current_step = self.dialogue_manager.get_step()
+
+        # -------------------------------------------------
+        # Registration conversation
+        # -------------------------------------------------
+        #
+        # If registration is already in progress,
+        # DialogueManager gets priority.
+        #
+
+        if current_step != "idle":
+
+            return self.dialogue_manager.process_message(text)
+
+        # -------------------------------------------------
+        # FAQ handling
+        # -------------------------------------------------
+        #
+        # Check the FAQ database before using
+        # the ML intent classifier.
+        #
+
+        faq_answer = find_faq(text)
+
+        if faq_answer:
+
+            return faq_answer
+
+        # -------------------------------------------------
+        # ML intent recognition
+        # -------------------------------------------------
+
+        return self.process_intent(text)
+
+    # -------------------------------------------------
+    # Reset
     # -------------------------------------------------
 
     def reset(self):
-        """Start a fresh conversation."""
+        """Reset the chatbot conversation."""
 
         self.dialogue_manager.reset()
 
+
+# =====================================================
+# Terminal Chatbot
+# =====================================================
 
 def run_chatbot():
     """Run the chatbot in the terminal."""
@@ -144,15 +205,38 @@ def run_chatbot():
     chatbot = RegistrationChatbot()
 
     print("=" * 60)
-    print("       AI REGISTRATION ASSISTANT")
+    print("          AI REGISTRATION ASSISTANT")
     print("=" * 60)
 
-    print("\nBot: Hello! Welcome to the AI Registration Assistant.")
-    print("Bot: Type 'exit' or 'quit' to end the conversation.\n")
+    print(
+        "\nBot: Hello! Welcome to the AI Registration Assistant."
+    )
+
+    print(
+        "Bot: I can help with internship registration and FAQs."
+    )
+
+    print(
+        "Bot: Type 'exit', 'quit', or 'bye' to end.\n"
+    )
 
     while True:
 
-        user_input = input("You: ").strip()
+        try:
+
+            user_input = input("You: ").strip()
+
+        except (KeyboardInterrupt, EOFError):
+
+            print(
+                "\nBot: Goodbye! Have a great day. 👋"
+            )
+
+            break
+
+        # -------------------------------------------------
+        # Exit commands
+        # -------------------------------------------------
 
         if user_input.lower() in {
             "exit",
@@ -166,10 +250,19 @@ def run_chatbot():
 
             break
 
+        # -------------------------------------------------
+        # Generate response
+        # -------------------------------------------------
+
         response = chatbot.respond(user_input)
 
         print("Bot:", response)
 
 
+# =====================================================
+# Program Entry Point
+# =====================================================
+
 if __name__ == "__main__":
+
     run_chatbot()

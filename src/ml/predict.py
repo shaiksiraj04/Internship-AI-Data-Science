@@ -1,93 +1,121 @@
-import os
-import pickle
+"""
+ML intent prediction module.
+
+Uses the trained TF-IDF + Logistic Regression model
+to predict the user's intent and confidence score.
+"""
+
+from pathlib import Path
+import joblib
 
 
-BASE_DIR = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.abspath(__file__)
-        )
-    )
-)
+# -------------------------------------------------
+# Model paths
+# -------------------------------------------------
 
-MODEL_PATH = os.path.join(
-    BASE_DIR,
-    "models",
-    "intent_model.pkl"
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+MODEL_PATH = PROJECT_ROOT / "models" / "intent_model.pkl"
 
 
-CONFIDENCE_THRESHOLD = 0.45
+# -------------------------------------------------
+# Load model
+# -------------------------------------------------
+
+model = joblib.load(MODEL_PATH)
 
 
-def load_model():
-    """
-    Load the trained intent classification model.
-    """
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
 
-    with open(MODEL_PATH, "rb") as file:
-        model = pickle.load(file)
+CONFIDENCE_THRESHOLD = 0.50
 
-    return model
 
+# -------------------------------------------------
+# Prediction
+# -------------------------------------------------
 
 def predict_intent(text):
     """
     Predict the intent of a user message.
 
-    If the model confidence is below the threshold,
-    return 'unknown'.
+    Args:
+        text (str): User message
+
+    Returns:
+        tuple: (intent, confidence)
     """
 
-    model = load_model()
+    if not text or not text.strip():
+        return "unknown", 0.0
 
     probabilities = model.predict_proba([text])[0]
 
-    class_index = probabilities.argmax()
+    classes = model.classes_
 
-    predicted_intent = model.classes_[class_index]
+    best_index = probabilities.argmax()
 
-    confidence = probabilities[class_index]
+    intent = classes[best_index]
+    confidence = float(probabilities[best_index])
+
+    # -------------------------------------------------
+    # Unknown intent handling
+    # -------------------------------------------------
 
     if confidence < CONFIDENCE_THRESHOLD:
-        predicted_intent = "unknown"
+        return "unknown", confidence
 
-    return predicted_intent, confidence
+    return intent, confidence
 
+
+def predict_intent_with_details(text):
+    """
+    Return detailed intent prediction information.
+
+    Args:
+        text (str): User message
+
+    Returns:
+        dict: Intent prediction details
+    """
+
+    intent, confidence = predict_intent(text)
+
+    return {
+        "text": text,
+        "intent": intent,
+        "confidence": round(confidence, 4)
+    }
+
+
+# -------------------------------------------------
+# Manual testing
+# -------------------------------------------------
 
 if __name__ == "__main__":
 
-    model = load_model()
+    print("=" * 60)
+    print("       ML INTENT PREDICTION TEST")
+    print("=" * 60)
 
     test_messages = [
-        "Hello there!",
-        "I want to register for the internship",
+        "Hello",
+        "I want to register",
         "Can you help me?",
-        "I am studying computer science",
         "My name is Siraj",
-        "My email is siraj@gmail.com",
-        "I am a beginner in programming",
-        "Thank you for your help",
-        "I like playing cricket",
-        "What is the weather today?"
+        "siraj@example.com",
+        "I study computer science",
+        "Thank you",
+        "The weather is beautiful today",
+        "I like playing cricket"
     ]
-
-    print("ML Intent Prediction")
-    print("=" * 50)
 
     for message in test_messages:
 
-        probabilities = model.predict_proba([message])[0]
+        result = predict_intent_with_details(message)
 
-        class_index = probabilities.argmax()
-
-        predicted_intent = model.classes_[class_index]
-
-        confidence = probabilities[class_index]
-
-        if confidence < CONFIDENCE_THRESHOLD:
-            predicted_intent = "unknown"
-
-        print(f"\nUser: {message}")
-        print(f"Intent: {predicted_intent}")
-        print(f"Confidence: {confidence:.2f}")
+        print()
+        print(f"Text       : {result['text']}")
+        print(f"Intent     : {result['intent']}")
+        print(f"Confidence : {result['confidence']}")

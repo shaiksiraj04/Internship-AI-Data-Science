@@ -1,0 +1,91 @@
+{
+    "faqs": [
+        {
+            "question": "What is this internship?",
+            "keywords": [
+                "internship",
+                "program",
+                "training"
+            ],
+            "answer": "This internship provides practical experience through project-based learning in AI and Data Science."
+        },
+        {
+            "question": "How can I register?",
+            "keywords": [
+                "register",
+                "registration",
+                "apply",
+                "application"
+            ],
+            "answer": "You can register by saying 'I want to register'. I will guide you through the registration process."
+        },
+        {
+            "question": "What information is required?",
+            "keywords": [
+                "information",
+                "details",
+                "required",
+                "requirements"
+            ],
+            "answer": "The registration requires your name, email address, and field of study."
+        },
+        {
+            "question": "Which fields of study are supported?",
+            "keywords": [
+                "field",
+                "study",
+                "course",
+                "branch",
+                "cse",
+                "data science",
+                "artificial intelligence",
+                "ece",
+                "eee",
+                "mechanical",
+                "civil"
+            ],
+            "answer": "Supported fields include Computer Science, Data Science, Artificial Intelligence, ECE, EEE, Mechanical Engineering, Civil Engineering, and Information Technology."
+        },
+        {
+            "question": "Can I correct my information?",
+            "keywords": [
+                "correct",
+                "change",
+                "edit",
+                "modify",
+                "wrong"
+            ],
+            "answer": "Yes. Before final confirmation, you can choose the information you want to correct."
+        },
+        {
+            "question": "What happens after registration?",
+            "keywords": [
+                "after",
+                "completed",
+                "success",
+                "confirmation"
+            ],
+            "answer": "After you confirm your details, your registration is saved successfully."
+        },
+        {
+            "question": "Can I register again?",
+            "keywords": [
+                "again",
+                "reregister",
+                "duplicate",
+                "already"
+            ],
+            "answer": "Each email address can be registered only once. If an email is already registered, you need to provide a different email address."
+        },
+        {
+            "question": "How can I get help?",
+            "keywords": [
+                "help",
+                "support",
+                "assist",
+                "guidance"
+            ],
+            "answer": "You can type 'help' at any time and I will explain how I can assist you."
+        }
+    ]
+}
